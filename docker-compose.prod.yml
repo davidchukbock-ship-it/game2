@@ -1,0 +1,25 @@
+# Боевой запуск с HTTPS на своём домене (сертификат Caddy получает сам):
+#   1) в .env задайте DOMAIN=game.example.com, NODE_ENV=production, JWT_ACCESS_SECRET, POSTGRES_PASSWORD
+#   2) A-запись домена должна указывать на IP сервера, порты 80 и 443 открыты
+#   3) docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+services:
+  server:
+    environment:
+      CORS_ORIGIN: https://${DOMAIN:?задайте DOMAIN в .env}
+    ports: !override []
+  web:
+    ports: !override []
+  caddy:
+    image: caddy:2-alpine
+    command: caddy reverse-proxy --from ${DOMAIN:?задайте DOMAIN в .env} --to web:80
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - caddy-data:/data
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  caddy-data:

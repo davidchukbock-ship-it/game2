@@ -1,0 +1,28 @@
+# Только БД и Redis с открытыми портами — для разработки (`pnpm dev` на вашем компьютере).
+# Запуск:  pnpm db:up      Остановка:  pnpm db:down
+# Данные лежат в томе pgdata-dev и переживают перезапуск.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: throne
+      POSTGRES_PASSWORD: throne
+      POSTGRES_DB: throne
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U throne -d throne']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    ports:
+      - '6379:6379'
+
+volumes:
+  pgdata-dev:

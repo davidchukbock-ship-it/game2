@@ -1,0 +1,62 @@
+{
+  "name": "throne-clash",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "description": "Throne Clash — казуальная браузерная MMO-стратегия (монорепозиторий)",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @tc/server --filter @tc/web dev",
+    "build": "pnpm -r build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage",
+    "test:e2e": "pnpm --filter @tc/web test:e2e",
+    "share": "cloudflared tunnel --url http://localhost:5173",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d --wait",
+    "db:down": "docker compose -f docker-compose.dev.yml down",
+    "db:embedded": "pnpm --filter @tc/server db:embedded",
+    "db:generate": "pnpm --filter @tc/server db:generate",
+    "db:migrate": "pnpm --filter @tc/server db:migrate",
+    "seed": "pnpm --filter @tc/server seed",
+    "god:hash": "pnpm --filter @tc/server god:hash",
+    "god:totp": "pnpm --filter @tc/server god:totp",
+    "prepare": "node scripts/prepare.mjs",
+    "owner:grant": "pnpm --filter @tc/server owner:grant",
+    "screenshots": "SCREENSHOTS=1 pnpm --filter @tc/web exec playwright test e2e/screenshots.spec.ts",
+    "hostinger:build": "node scripts/hostinger.mjs build",
+    "hostinger:start": "node scripts/hostinger.mjs start",
+    "start": "node scripts/hostinger.mjs start"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
+    "@eslint/js": "^9.20.0",
+    "eslint": "^9.20.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^15.15.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.24.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css}": [
+      "prettier --write"
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+# Запуск всей игры:  cp .env.example .env && docker compose up --build
+# Игра: http://localhost:8080   API/Swagger: http://localhost:3000 (/docs)
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-throne}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-throne}
+      POSTGRES_DB: ${POSTGRES_DB:-throne}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-throne} -d ${POSTGRES_DB:-throne}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    env_file: .env
+    environment:
+      # Внутри сети compose адреса сервисов — по именам
+      DATABASE_URL: postgresql://${POSTGRES_USER:-throne}:${POSTGRES_PASSWORD:-throne}@postgres:5432/${POSTGRES_DB:-throne}
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://localhost:8080
+      HOST: 0.0.0.0
+      PORT: 3000
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    ports:
+      - '3000:3000'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:3000/health'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 4s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      server: { condition: service_healthy }
+    ports:
+      - '8080:80'
+    restart: unless-stopped
+
+volumes:
+  pgdata:
